@@ -101,6 +101,8 @@ export class WhatsAppStore extends DurableObject<Env> {
 
   /** Slow down password guessing: five wrong passwords in a row, then longer and longer waits. */
   noteLogin(ok: boolean) {
+    // No account yet means no tables yet (see the constructor), and nothing to lock.
+    if (!hasSchema(this.ctx.storage.sql)) return;
     if (ok) { this.setMeta('fails', '0'); this.setMeta('locked_until', '0'); return; }
     const fails = Number(this.meta('fails') ?? 0) + 1;
     this.setMeta('fails', String(fails));
