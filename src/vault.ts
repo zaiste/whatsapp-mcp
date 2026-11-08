@@ -55,9 +55,20 @@ export interface AccountRecord {
   created: number;
 }
 
+/** Deployed Workers refuse a single PBKDF2 call above this many iterations (`wrangler dev` doesn't enforce it). */
+const PBKDF2_MAX = 100_000;
+
+/**
+ * PBKDF2 for `iterations` in total, as a chain of calls of at most PBKDF2_MAX, each keyed by the last one's output.
+ * Up to PBKDF2_MAX it is a single plain PBKDF2 call.
+ */
 async function stretch(password: string, salt: Buffer, iterations: number) {
-  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(password.normalize('NFKC')), 'PBKDF2', false, ['deriveBits']);
-  const master = Buffer.from(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations }, base, 256));
+  let key = new TextEncoder().encode(password.normalize('NFKC'));
+  for (let left = iterations; left > 0; left -= PBKDF2_MAX) {
+    const base = await crypto.subtle.importKey('raw', key, 'PBKDF2', false, ['deriveBits']);
+    key = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: Math.min(left, PBKDF2_MAX) }, base, 256));
+  }
+  const master = Buffer.from(key);
   // Two independent keys from one stretch: one wraps the DEK, one proves the password.
   return { kek: hmac(master, 'kek'), auth: hmac(master, 'auth') };
 }
