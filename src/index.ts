@@ -244,19 +244,32 @@ const ownerHandler = {
   },
 };
 
-const oauth = new OAuthProvider({
-  apiRoute: '/mcp',
-  apiHandler: { fetch: (request: Request, env: Env, ctx: ExecutionContext & { props: McpProps }) => handleMcp(request, env, ctx.props) } as any,
-  defaultHandler: ownerHandler as any,
-  authorizeEndpoint: '/authorize',
-  tokenEndpoint: '/token',
-  clientRegistrationEndpoint: '/register',
-  scopesSupported: ['whatsapp'],
-  refreshTokenTTL: 10 * 365 * 24 * 60 * 60,
-});
+/**
+ * Tokens are bound to the URL clients connect to (`<origin>/mcp`), and this server runs on whatever host its
+ * deployer gives it (workers.dev, a custom domain, localhost), so the provider is built per origin.
+ */
+const providers = new Map<string, OAuthProvider>();
+function oauthFor(origin: string) {
+  let provider = providers.get(origin);
+  if (!provider) {
+    provider = new OAuthProvider({
+      apiRoute: '/mcp',
+      apiHandler: { fetch: (request: Request, env: Env, ctx: ExecutionContext & { props: McpProps }) => handleMcp(request, env, ctx.props) } as any,
+      defaultHandler: ownerHandler as any,
+      authorizeEndpoint: '/authorize',
+      tokenEndpoint: '/token',
+      clientRegistrationEndpoint: '/register',
+      scopesSupported: ['whatsapp'],
+      resourceMetadata: { resource: `${origin}/mcp` },
+      refreshTokenTTL: 10 * 365 * 24 * 60 * 60,
+    });
+    providers.set(origin, provider);
+  }
+  return provider;
+}
 
 export default {
-  fetch: (request: Request, env: Env, ctx: ExecutionContext) => oauth.fetch(request, env, ctx),
+  fetch: (request: Request, env: Env, ctx: ExecutionContext) => oauthFor(new URL(request.url).origin).fetch(request, env, ctx),
   /**
    * Once a day, write the seat and waitlist counts to the log, where the operator (or their agent, through
    * Cloudflare's API) can read them without the PIN. Counts only.
