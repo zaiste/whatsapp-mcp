@@ -324,7 +324,7 @@ These all cost real time to find. Read them before touching the Baileys parts.
 | `WA` | binding | The per-person Durable Object. |
 | `REGISTRY` | binding | One Durable Object that counts accounts, so `SIGNUP_LIMIT` is a real cap. |
 
-Keep a deployment's own values (domain, KV id) in `wrangler.local.jsonc`, which is gitignored, and deploy with `npm run deploy:local`. `wrangler.jsonc` is the template other people start from.
+Keep a deployment's own values (domain, KV id) in `wrangler.local.jsonc`, which is gitignored. `npm run deploy` uses it when it exists, and `wrangler.jsonc`, the template other people start from, otherwise.
 
 Lost that file, or deploying from a new machine? `CLOUDFLARE_API_TOKEN=... node scripts/pull-config.mjs` rebuilds it from the live Worker: vars, KV and Durable Object bindings, email, custom domains, crons and limits, with `wrangler.jsonc` filling in what Cloudflare doesn't report. Secrets stay on Cloudflare and are only listed by name. If the live Worker has applied more Durable Object migrations than `wrangler.jsonc` lists (because it was once deployed from a config with its own steps), the script pads the list with empty placeholder steps up to the live tag; without them, wrangler refuses to deploy. Check the result with `npx wrangler deploy -c wrangler.local.jsonc --dry-run`.
 
