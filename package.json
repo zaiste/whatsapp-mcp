@@ -12,16 +12,16 @@
     "test": "node --experimental-transform-types --no-warnings --import ./test/ts-resolve.mjs test/store.test.mts"
   },
   "dependencies": {
-    "@cloudflare/workers-oauth-provider": "0.7.0",
-    "@modelcontextprotocol/sdk": "1.29.0",
+    "@cloudflare/workers-oauth-provider": "1.2.4",
+    "@modelcontextprotocol/sdk": "1.32.2",
     "@whiskeysockets/baileys": "7.0.0-rc14",
     "qrcode-generator": "^2.0.4",
-    "zod": "^4.4.3"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^5.20261018.1",
+    "@cloudflare/workers-types": "^5.20261108.1",
     "typescript": "^7.0.2",
-    "wrangler": "^4.151.1"
+    "wrangler": "^4.158.0"
   },
   "description": "A read-only MCP server over your own WhatsApp history, running on Cloudflare Workers.",
   "license": "MIT",
